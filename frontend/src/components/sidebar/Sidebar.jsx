@@ -9,7 +9,7 @@ const Sidebar = () => {
   const underSM = useMediaQuery("(max-width: 640px)");
   const [activeComponent, setActiveComponent] = useState("conversations");
   return (
-    <div className="border-r border-slate-500 p-4 flex flex-col ">
+    <div className="border-r border-slate-500 p-4 flex flex-col">
       {underSM ? "" : <SearchInput />}
       <div className="divider px-3"></div>
 

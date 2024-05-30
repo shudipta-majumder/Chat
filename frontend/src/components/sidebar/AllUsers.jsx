@@ -1,23 +1,25 @@
 import useGetAllUsers from "../../hooks/useGetAllUsers";
 import { getRandomEmoji } from "../../utils/emojis";
 import User from "./user";
+import ConversationSkeleton from "./ConversationSkeleton";
 
 const AllUsers = () => {
   const { loading, conversations } = useGetAllUsers();
+  const skeletonCount = 5;
   return (
     <div className="py-2 flex flex-col overflow-auto">
-      {conversations.map((conversation, idx) => (
-        <User
-          key={conversation._id}
-          conversation={conversation}
-          emoji={getRandomEmoji()}
-          lastIdx={idx === conversations.length - 1}
-        />
-      ))}
-
-      {loading ? (
-        <span className="loading loading-spinner mx-auto"></span>
-      ) : null}
+      {loading
+        ? Array.from({ length: skeletonCount }).map((_, idx) => (
+            <ConversationSkeleton key={idx} />
+          ))
+        : conversations.map((conversation, idx) => (
+            <User
+              key={conversation._id}
+              conversation={conversation}
+              emoji={getRandomEmoji()}
+              lastIdx={idx === conversations.length - 1}
+            />
+          ))}
     </div>
   );
 };
