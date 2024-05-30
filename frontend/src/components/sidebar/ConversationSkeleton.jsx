@@ -3,13 +3,18 @@ import useMediaQuery from "../../hooks/useMediaquery";
 const ConversationSkeleton = () => {
   const underSM = useMediaQuery("(max-width: 640px)");
   return (
-    <div className="flex gap-16 items-center rounded p-2 py-1 bg-gray-700 animate-pulse">
+    <>
       {underSM ? (
-        <div className="avatar">
-          <div className="w-12 h-12 rounded-full bg-gray-600"></div>
+        <div className="flex gap-16 items-center rounded p-2 py-1 bg-gray-700 animate-pulse">
+          <div className="avatar">
+            <div className="w-12 h-12 rounded-full bg-gray-600"></div>
+          </div>
         </div>
       ) : (
-        <div>
+        <div className="flex gap-16 items-center rounded p-2 py-1 bg-gray-700 animate-pulse">
+          <div className="avatar">
+            <div className="w-12 h-12 rounded-full bg-gray-600"></div>
+          </div>
           <div className="avatar">
             <div className="w-12 h-12 rounded-full bg-gray-600"></div>
           </div>
@@ -22,7 +27,7 @@ const ConversationSkeleton = () => {
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };
 
