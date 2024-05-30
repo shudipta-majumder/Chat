@@ -9,24 +9,28 @@ const Sidebar = () => {
   const underSM = useMediaQuery("(max-width: 640px)");
   const [activeComponent, setActiveComponent] = useState("conversations");
   return (
-    <div className="border-r border-slate-500 p-4 flex flex-col">
+    <div className="border-r border-slate-500 p-4 flex flex-col ">
       {underSM ? "" : <SearchInput />}
       <div className="divider px-3"></div>
 
-      <div className="button-group mb-4">
-        <button
-          className={`btn ${
-            activeComponent === "conversations" ? "btn-active" : ""
+      <div className="button-group mb-2 flex justify-center gap-4">
+      <button
+          className={`px-3 py-1 text-sm rounded-full transition-colors ${
+            activeComponent === 'conversations'
+              ? 'bg-purple-600 text-white'
+              : 'bg-purple-200 text-purple-600 hover:bg-purple-300'
           }`}
-          onClick={() => setActiveComponent("conversations")}
+          onClick={() => setActiveComponent('conversations')}
         >
           My Messages
         </button>
         <button
-          className={`btn ${
-            activeComponent === "allUsers" ? "btn-active" : ""
+          className={`px-3 py-1 text-sm rounded-full transition-colors ${
+            activeComponent === 'allUsers'
+              ? 'bg-purple-600 text-white'
+              : 'bg-purple-200 text-purple-600 hover:bg-purple-300'
           }`}
-          onClick={() => setActiveComponent("allUsers")}
+          onClick={() => setActiveComponent('allUsers')}
         >
           All Friends
         </button>
