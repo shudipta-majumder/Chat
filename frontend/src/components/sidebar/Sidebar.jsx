@@ -4,6 +4,7 @@ import LogoutButton from "./LogoutButton";
 import SearchInput from "./SearchInput";
 import useMediaQuery from "../../hooks/useMediaquery";
 import { useState } from "react";
+import { FaEnvelope, FaUserFriends } from "react-icons/fa";
 
 const Sidebar = () => {
   const underSM = useMediaQuery("(max-width: 640px)");
@@ -14,25 +15,25 @@ const Sidebar = () => {
       <div className="divider px-3"></div>
 
       <div className="button-group mb-2 flex justify-center gap-4">
-      <button
+        <button
           className={`px-3 py-1 text-sm rounded-full transition-colors ${
-            activeComponent === 'conversations'
-              ? 'bg-purple-600 text-white'
-              : 'bg-purple-200 text-purple-600 hover:bg-purple-300'
+            activeComponent === "conversations"
+              ? "bg-purple-600 text-white"
+              : "bg-purple-200 text-purple-600 hover:bg-purple-300"
           }`}
-          onClick={() => setActiveComponent('conversations')}
+          onClick={() => setActiveComponent("conversations")}
         >
-          My Messages
+          {underSM ? <FaEnvelope /> : "My Messages"}
         </button>
         <button
           className={`px-3 py-1 text-sm rounded-full transition-colors ${
-            activeComponent === 'allUsers'
-              ? 'bg-purple-600 text-white'
-              : 'bg-purple-200 text-purple-600 hover:bg-purple-300'
+            activeComponent === "allUsers"
+              ? "bg-purple-600 text-white"
+              : "bg-purple-200 text-purple-600 hover:bg-purple-300"
           }`}
-          onClick={() => setActiveComponent('allUsers')}
+          onClick={() => setActiveComponent("allUsers")}
         >
-          All Friends
+          {underSM ? <FaUserFriends /> : "All Friends"}
         </button>
       </div>
 

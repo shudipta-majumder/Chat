@@ -5,7 +5,7 @@ import ConversationSkeleton from "./ConversationSkeleton";
 
 const Conversations = () => {
   const { loading, conversations } = useGetConversations();
-  const skeletonCount = 5;
+  const skeletonCount = 15;
   return (
     <div className="py-2 flex flex-col overflow-auto">
       {loading
