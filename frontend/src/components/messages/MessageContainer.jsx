@@ -30,7 +30,6 @@ const MessageContainer = () => {
                 <p>
                   Last seen:{" "}
                   {new Date(selectedConversation.lastSeen).toLocaleString()}
-                  {selectedConversation.lastSeen}
                 </p>
               ) : (
                 <p>Currently online</p>
