@@ -28,6 +28,12 @@ export const SocketContextProvider = ({ children }) => {
         setOnlineUsers(users);
       });
 
+      socket.on("userOffline", ({ userId }) => {
+        setOnlineUsers((prevUsers) =>
+          prevUsers.filter((user) => user._id !== userId)
+        );
+      });
+
       return () => socket.close();
     } else {
       if (socket) {
