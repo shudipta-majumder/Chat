@@ -25,9 +25,13 @@ const MessageContainer = () => {
             <span className="text-gray-900 font-bold">
               {selectedConversation.fullName}
             </span>
-            <span className="text-gray-200">
-              {selectedConversation.lastSeen}
-            </span>
+            <div>
+              {selectedConversation.lastSeen ? (
+                <p>Last seen: {new Date(selectedConversation.lastSeen).toLocaleString()}</p>
+              ) : (
+                <p>Currently online</p>
+              )}
+            </div>
           </div>
           <Messages />
           <MessageInput />
