@@ -4,12 +4,9 @@ import MessageInput from "./MessageInput";
 import Messages from "./Messages";
 import { TiMessages } from "react-icons/ti";
 import { useAuthContext } from "../../context/AuthContext";
-import { useSocketContext } from "../../context/SocketContext";
 
 const MessageContainer = () => {
   const { selectedConversation, setSelectedConversation } = useConversation();
-  const { onlineUsers } = useSocketContext();
-  const isOnline = onlineUsers.includes(selectedConversation._id);
 
   useEffect(() => {
     // cleanup function (unmounts)
@@ -29,13 +26,13 @@ const MessageContainer = () => {
               {selectedConversation.fullName}
             </span>
             <div>
-              {!isOnline ? (
+              {selectedConversation.lastSeen ? (
                 <p>
                   Last seen:{" "}
                   {new Date(selectedConversation.lastSeen).toLocaleString()}
                 </p>
               ) : (
-                <p>Active</p>
+                <p>Currently online</p>
               )}
             </div>
           </div>
