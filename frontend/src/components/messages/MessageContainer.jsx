@@ -25,6 +25,9 @@ const MessageContainer = () => {
             <span className="text-gray-900 font-bold">
               {selectedConversation.fullName}
             </span>
+            <span className="text-gray-200">
+              {selectedConversation.lastSeen}
+            </span>
           </div>
           <Messages />
           <MessageInput />
@@ -41,7 +44,6 @@ const NoChatSelected = () => {
     <div className="flex items-center justify-center w-full h-full">
       <div className="px-4 text-center sm:text-lg md:text-xl text-gray-200 font-semibold flex flex-col items-center gap-2">
         <p>Welcome 👋 {authUser.fullName} ❄</p>
-        <p>last seen:  {authUser.lastSeen} ❄</p>
         <p className="text-gray-300">Select a chat to start messaging</p>
         <TiMessages className="text-3xl md:text-6xl text-center" />
       </div>
