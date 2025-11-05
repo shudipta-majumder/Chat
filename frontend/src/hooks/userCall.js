@@ -2,59 +2,55 @@
 import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
-// adjust to your backend url
 const SIGNALING_SERVER_URL = "https://chat-994b.onrender.com";
 
-// STUN/TURN config - set TURN in production
 const ICE_SERVERS = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
-    // add TURN server here for production
+    // add TURN server for production
   ],
 };
 
-export default function useCall({ conversationId, localUserId, localUserName  }) {
+export default function useCall({ conversationId, localUserId, localUserName }) {
   const socketRef = useRef(null);
   const pcRef = useRef(null);
   const localStreamRef = useRef(null);
   const remoteStreamRef = useRef(null);
 
   const [isCalling, setIsCalling] = useState(false);
-  const [incomingCall, setIncomingCall] = useState(null); // { from }
+  const [incomingCall, setIncomingCall] = useState(null);
   const [callActive, setCallActive] = useState(false);
   const [muted, setMuted] = useState(false);
+  const [videoEnabled, setVideoEnabled] = useState(true);
   const [pendingOffer, setPendingOffer] = useState(null);
+  const [callType, setCallType] = useState("audio"); // audio or video
 
   useEffect(() => {
     socketRef.current = io(SIGNALING_SERVER_URL);
     const socket = socketRef.current;
 
     socket.on("connect", () => {
-      // Join conversation room so signaling stays scoped
       socket.emit("join-room", { conversationId, userId: localUserId });
     });
 
-    socket.on("incoming-call", ({ from }) => {
-      setIncomingCall({ from });
+    socket.on("incoming-call", ({ from, type }) => {
+      setIncomingCall({ from, type });
+      setCallType(type);
     });
 
-    socket.on("offer", async ({ from, sdp }) => {
-      // store the offer and caller info
-      setIncomingCall({ from });
-      setPendingOffer({ from, sdp });
+    socket.on("offer", ({ from, sdp, type }) => {
+      setIncomingCall({ from, type });
+      setCallType(type);
+      setPendingOffer({ from, sdp, type });
     });
 
-    socket.on("incoming-call", ({ from }) => {
-      setIncomingCall({ from });
-    });
-
-    socket.on("answer", async ({ from, sdp }) => {
+    socket.on("answer", async ({ sdp }) => {
       if (!pcRef.current) return;
       await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
       setCallActive(true);
     });
 
-    socket.on("ice-candidate", async ({ from, candidate }) => {
+    socket.on("ice-candidate", async ({ candidate }) => {
       if (candidate && pcRef.current) {
         try {
           await pcRef.current.addIceCandidate(new RTCIceCandidate(candidate));
@@ -64,33 +60,24 @@ export default function useCall({ conversationId, localUserId, localUserName  })
       }
     });
 
-    socket.on("end-call", ({ from }) => {
-      closeCall();
-    });
+    socket.on("end-call", () => closeCall());
 
     return () => {
-      // cleanup socket on unmount or conversation change
-      if (socketRef.current) {
-        socketRef.current.disconnect();
-      }
+      if (socketRef.current) socketRef.current.disconnect();
       cleanupMedia();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, localUserId]);
 
-  const ensurePeerConnection = async () => {
+  const ensurePeerConnection = async (type = "audio") => {
     if (pcRef.current) return pcRef.current;
 
     pcRef.current = new RTCPeerConnection(ICE_SERVERS);
-
-    // create remote stream container
     remoteStreamRef.current = new MediaStream();
 
     pcRef.current.ontrack = (event) => {
-      // attach tracks to remote stream
-      event.streams?.[0]?.getTracks().forEach((t) => {
-        remoteStreamRef.current.addTrack(t);
-      });
+      event.streams[0]?.getTracks().forEach((track) =>
+        remoteStreamRef.current.addTrack(track)
+      );
     };
 
     pcRef.current.onicecandidate = (event) => {
@@ -103,15 +90,20 @@ export default function useCall({ conversationId, localUserId, localUserName  })
       }
     };
 
-    // get local audio
+    // get local media
     try {
-      const localStream = await navigator.mediaDevices.getUserMedia({
+      const constraints = {
         audio: true,
-      });
+        video: type === "video",
+      };
+      const localStream = await navigator.mediaDevices.getUserMedia(constraints);
       localStreamRef.current = localStream;
+
       localStream.getTracks().forEach((track) => {
         pcRef.current.addTrack(track, localStream);
       });
+
+      setVideoEnabled(type === "video");
     } catch (err) {
       console.error("Failed to get local media", err);
       throw err;
@@ -120,26 +112,28 @@ export default function useCall({ conversationId, localUserId, localUserName  })
     return pcRef.current;
   };
 
-  const startCall = async (toUserId) => {
-    await ensurePeerConnection();
+  const startCall = async (toUserId, options = { type: "audio" }) => {
+    setCallType(options.type);
+    await ensurePeerConnection(options.type);
 
-    // 🔔 Notify the callee about the incoming call
+    // notify callee
     socketRef.current.emit("call-user", {
       conversationId,
       from: localUserId,
       to: toUserId,
+      type: options.type,
     });
 
     const offer = await pcRef.current.createOffer();
     await pcRef.current.setLocalDescription(offer);
 
-    // send the SDP offer after the popup notification
     socketRef.current.emit("offer", {
       conversationId,
       from: localUserId,
       fromName: localUserName,
       to: toUserId,
       sdp: pcRef.current.localDescription,
+      type: options.type,
     });
 
     setIsCalling(true);
@@ -147,9 +141,10 @@ export default function useCall({ conversationId, localUserId, localUserName  })
 
   const acceptCall = async () => {
     if (!pendingOffer) return;
-    const { from, sdp } = pendingOffer;
+    const { from, sdp, type } = pendingOffer;
 
-    await ensurePeerConnection(); // now we get mic and PC
+    setCallType(type);
+    await ensurePeerConnection(type);
     await pcRef.current.setRemoteDescription(new RTCSessionDescription(sdp));
 
     const answer = await pcRef.current.createAnswer();
@@ -180,10 +175,14 @@ export default function useCall({ conversationId, localUserId, localUserName  })
 
   const muteToggle = () => {
     if (!localStreamRef.current) return;
-    localStreamRef.current
-      .getAudioTracks()
-      .forEach((t) => (t.enabled = !t.enabled));
+    localStreamRef.current.getAudioTracks().forEach((t) => (t.enabled = !t.enabled));
     setMuted((m) => !m);
+  };
+
+  const videoToggle = () => {
+    if (!localStreamRef.current) return;
+    localStreamRef.current.getVideoTracks().forEach((t) => (t.enabled = !t.enabled));
+    setVideoEnabled((v) => !v);
   };
 
   const closeCall = () => {
@@ -191,16 +190,14 @@ export default function useCall({ conversationId, localUserId, localUserName  })
     setIsCalling(false);
     setIncomingCall(null);
 
-    // Close PC
     if (pcRef.current) {
       try {
-        pcRef.current.getSenders().forEach((s) => {
-          if (s.track) s.track.stop();
-        });
+        pcRef.current.getSenders().forEach((s) => s.track?.stop());
         pcRef.current.close();
       } catch (e) {}
       pcRef.current = null;
     }
+
     cleanupMedia();
   };
 
@@ -222,11 +219,14 @@ export default function useCall({ conversationId, localUserId, localUserName  })
     rejectCall,
     endCall,
     muteToggle,
+    videoToggle,
     isCalling,
     incomingCall,
     callActive,
     localStream: localStreamRef.current,
     remoteStream: remoteStreamRef.current,
     muted,
+    videoEnabled,
+    callType,
   };
 }

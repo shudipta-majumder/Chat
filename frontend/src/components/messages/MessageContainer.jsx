@@ -1,4 +1,4 @@
-// MessageContainer.jsx
+// src/components/MessageContainer.jsx
 import { useEffect } from "react";
 import useConversation from "../../zustand/useConversation";
 import MessageInput from "./MessageInput";
@@ -7,27 +7,27 @@ import { TiMessages } from "react-icons/ti";
 import { IoCall, IoVideocam } from "react-icons/io5";
 import { useAuthContext } from "../../context/AuthContext";
 
-import useCall from "../../hooks/userCall";
+import useCall from "../../hooks/userCall"; // make sure this handles audio/video
 import CallModal from "../Modal/callModal"; // adjust path
 
 const MessageContainer = () => {
   const { selectedConversation, setSelectedConversation } = useConversation();
   const { authUser } = useAuthContext();
 
-  // pass conversation id and current user id
   const {
     startCall,
-    // startVideoCall,
     acceptCall,
     rejectCall,
     endCall,
     muteToggle,
+    videoToggle,
     isCalling,
     incomingCall,
     callActive,
     localStream,
     remoteStream,
     muted,
+    videoEnabled,
   } = useCall({
     conversationId: selectedConversation
       ? String(selectedConversation.id)
@@ -37,22 +37,21 @@ const MessageContainer = () => {
   });
 
   useEffect(() => {
-    // cleanup function (unmounts)
     return () => setSelectedConversation(null);
   }, [setSelectedConversation]);
 
   const handleAudioCall = () => {
     if (!selectedConversation) return;
-    // send call to everyone in same conversation; they will decide to accept
-    startCall(selectedConversation.participantId || selectedConversation.id); // adjust to your data model
+    startCall(selectedConversation.participantId || selectedConversation.id, {
+      type: "audio",
+    });
   };
 
   const handleVideoCall = () => {
     if (!selectedConversation) return;
-    // You can use a different hook method if you have video call logic
-    // startVideoCall(
-    //   selectedConversation.participantId || selectedConversation.id
-    // );
+    startCall(selectedConversation.participantId || selectedConversation.id, {
+      type: "video",
+    });
   };
 
   return (
@@ -80,7 +79,7 @@ const MessageContainer = () => {
               </div>
             </div>
 
-            {/* Audio Call Button */}
+            {/* Call Buttons */}
             <div className="flex items-center gap-2">
               <button
                 onClick={handleAudioCall}
@@ -105,7 +104,7 @@ const MessageContainer = () => {
         </>
       )}
 
-      {/* Call modal/UI (global) */}
+      {/* Call modal/UI */}
       <CallModal
         incomingCall={incomingCall}
         isCalling={isCalling}
@@ -115,14 +114,17 @@ const MessageContainer = () => {
         rejectCallHandler={rejectCall}
         endCallHandler={endCall}
         localStream={localStream}
-        remoteStreamRef={{ current: remoteStream }} // hook returns remoteStream ref
+        remoteStreamRef={{ current: remoteStream }}
         muted={muted}
+        videoEnabled={videoEnabled}
         muteToggle={muteToggle}
+        videoToggle={videoToggle}
         calleeName={selectedConversation?.fullName}
       />
     </div>
   );
 };
+
 export default MessageContainer;
 
 const NoChatSelected = () => {
