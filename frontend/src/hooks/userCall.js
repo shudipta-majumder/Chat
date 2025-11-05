@@ -11,7 +11,11 @@ const ICE_SERVERS = {
   ],
 };
 
-export default function useCall({ conversationId, localUserId, localUserName }) {
+export default function useCall({
+  conversationId,
+  localUserId,
+  localUserName,
+}) {
   const socketRef = useRef(null);
   const pcRef = useRef(null);
   const localStreamRef = useRef(null);
@@ -26,7 +30,14 @@ export default function useCall({ conversationId, localUserId, localUserName }) 
   const [callType, setCallType] = useState("audio"); // audio or video
 
   useEffect(() => {
-    socketRef.current = io(SIGNALING_SERVER_URL);
+    // socketRef.current = io(SIGNALING_SERVER_URL);
+    // initialize socket connection
+    socketRef.current = io(SIGNALING_SERVER_URL, {
+      transports: ["websocket"],
+      secure: true, // ensure HTTPS
+      rejectUnauthorized: false, // needed if using self-signed certificate
+    });
+
     const socket = socketRef.current;
 
     socket.on("connect", () => {
@@ -75,9 +86,9 @@ export default function useCall({ conversationId, localUserId, localUserName }) 
     remoteStreamRef.current = new MediaStream();
 
     pcRef.current.ontrack = (event) => {
-      event.streams[0]?.getTracks().forEach((track) =>
-        remoteStreamRef.current.addTrack(track)
-      );
+      event.streams[0]
+        ?.getTracks()
+        .forEach((track) => remoteStreamRef.current.addTrack(track));
     };
 
     pcRef.current.onicecandidate = (event) => {
@@ -96,7 +107,9 @@ export default function useCall({ conversationId, localUserId, localUserName }) 
         audio: true,
         video: type === "video",
       };
-      const localStream = await navigator.mediaDevices.getUserMedia(constraints);
+      const localStream = await navigator.mediaDevices.getUserMedia(
+        constraints
+      );
       localStreamRef.current = localStream;
 
       localStream.getTracks().forEach((track) => {
@@ -175,13 +188,17 @@ export default function useCall({ conversationId, localUserId, localUserName }) 
 
   const muteToggle = () => {
     if (!localStreamRef.current) return;
-    localStreamRef.current.getAudioTracks().forEach((t) => (t.enabled = !t.enabled));
+    localStreamRef.current
+      .getAudioTracks()
+      .forEach((t) => (t.enabled = !t.enabled));
     setMuted((m) => !m);
   };
 
   const videoToggle = () => {
     if (!localStreamRef.current) return;
-    localStreamRef.current.getVideoTracks().forEach((t) => (t.enabled = !t.enabled));
+    localStreamRef.current
+      .getVideoTracks()
+      .forEach((t) => (t.enabled = !t.enabled));
     setVideoEnabled((v) => !v);
   };
 
