@@ -1,17 +1,59 @@
+// MessageContainer.jsx
 import { useEffect } from "react";
 import useConversation from "../../zustand/useConversation";
 import MessageInput from "./MessageInput";
 import Messages from "./Messages";
 import { TiMessages } from "react-icons/ti";
+import { IoCall, IoVideocam } from "react-icons/io5";
 import { useAuthContext } from "../../context/AuthContext";
+
+import useCall from "../../hooks/userCall";
+import CallModal from "../Modal/callModal"; // adjust path
 
 const MessageContainer = () => {
   const { selectedConversation, setSelectedConversation } = useConversation();
+  const { authUser } = useAuthContext();
+
+  // pass conversation id and current user id
+  const {
+    startCall,
+    // startVideoCall,
+    acceptCall,
+    rejectCall,
+    endCall,
+    muteToggle,
+    isCalling,
+    incomingCall,
+    callActive,
+    localStream,
+    remoteStream,
+    muted,
+  } = useCall({
+    conversationId: selectedConversation
+      ? String(selectedConversation.id)
+      : "no-room",
+    localUserId: authUser?.id || "unknown",
+    localUserName: authUser?.fullName,
+  });
 
   useEffect(() => {
     // cleanup function (unmounts)
     return () => setSelectedConversation(null);
   }, [setSelectedConversation]);
+
+  const handleAudioCall = () => {
+    if (!selectedConversation) return;
+    // send call to everyone in same conversation; they will decide to accept
+    startCall(selectedConversation.participantId || selectedConversation.id); // adjust to your data model
+  };
+
+  const handleVideoCall = () => {
+    if (!selectedConversation) return;
+    // You can use a different hook method if you have video call logic
+    // startVideoCall(
+    //   selectedConversation.participantId || selectedConversation.id
+    // );
+  };
 
   return (
     <div className="md:min-w-[750px] flex flex-col">
@@ -20,26 +62,64 @@ const MessageContainer = () => {
       ) : (
         <>
           {/* Header */}
-          <div className="bg-slate-500 px-4 py-2 mb-2">
-            <span className="label-text">To:</span>{" "}
-            <span className="text-gray-900 font-bold">
-              {selectedConversation.fullName}
-            </span>
+          <div className="bg-slate-500 px-4 py-2 mb-2 flex justify-between items-center">
             <div>
-              {selectedConversation.lastSeen ? (
-                <p>
-                  Last seen:{" "}
-                  {new Date(selectedConversation.lastSeen).toLocaleString()}
-                </p>
-              ) : (
-                <p>Currently online</p>
-              )}
+              <span className="label-text">To:</span>{" "}
+              <span className="text-gray-900 font-bold">
+                {selectedConversation.fullName}
+              </span>
+              <div className="text-sm text-gray-800">
+                {selectedConversation.lastSeen ? (
+                  <p>
+                    Last seen:{" "}
+                    {new Date(selectedConversation.lastSeen).toLocaleString()}
+                  </p>
+                ) : (
+                  <p>Currently online</p>
+                )}
+              </div>
+            </div>
+
+            {/* Audio Call Button */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleAudioCall}
+                className="bg-green-500 hover:bg-green-600 text-white rounded-full p-2 shadow-md transition"
+                title="Start Audio Call"
+              >
+                <IoCall size={22} />
+              </button>
+
+              <button
+                onClick={handleVideoCall}
+                className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow-md transition"
+                title="Start Video Call"
+              >
+                <IoVideocam size={22} />
+              </button>
             </div>
           </div>
+
           <Messages />
           <MessageInput />
         </>
       )}
+
+      {/* Call modal/UI (global) */}
+      <CallModal
+        incomingCall={incomingCall}
+        isCalling={isCalling}
+        callActive={callActive}
+        startCallHandler={startCall}
+        acceptCallHandler={acceptCall}
+        rejectCallHandler={rejectCall}
+        endCallHandler={endCall}
+        localStream={localStream}
+        remoteStreamRef={{ current: remoteStream }} // hook returns remoteStream ref
+        muted={muted}
+        muteToggle={muteToggle}
+        calleeName={selectedConversation?.fullName}
+      />
     </div>
   );
 };
@@ -57,24 +137,3 @@ const NoChatSelected = () => {
     </div>
   );
 };
-
-// STARTER CODE SNIPPET
-// import MessageInput from "./MessageInput";
-// import Messages from "./Messages";
-
-// const MessageContainer = () => {
-// 	return (
-// 		<div className='md:min-w-[450px] flex flex-col'>
-// 			<>
-// 				{/* Header */}
-// 				<div className='bg-slate-500 px-4 py-2 mb-2'>
-// 					<span className='label-text'>To:</span> <span className='text-gray-900 font-bold'>John doe</span>
-// 				</div>
-
-// 				<Messages />
-// 				<MessageInput />
-// 			</>
-// 		</div>
-// 	);
-// };
-// export default MessageContainer;
