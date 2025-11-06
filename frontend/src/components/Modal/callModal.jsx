@@ -21,21 +21,21 @@ export default function CallModal({
   const remoteVideoRef = useRef(null);
   const [visible, setVisible] = useState(true);
 
-  // Attach local stream to local video element
+  // Attach local stream
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
     }
   }, [localStream]);
 
-  // Attach remote stream to remote video element
+  // Attach remote stream
   useEffect(() => {
     if (remoteVideoRef.current && remoteStreamRef?.current) {
       remoteVideoRef.current.srcObject = remoteStreamRef.current;
     }
   }, [remoteStreamRef]);
 
-  // Hide modal when no call is active
+  // Control modal visibility
   useEffect(() => {
     if (!incomingCall && !isCalling && !callActive) setVisible(false);
     else setVisible(true);
@@ -48,7 +48,9 @@ export default function CallModal({
       <div className="flex flex-col gap-2">
         {incomingCall ? (
           <>
-            <div className="font-semibold">Incoming {incomingCall.callType || "audio"} call</div>
+            <div className="font-semibold">
+              Incoming {incomingCall.callType || "audio"} call
+            </div>
             <div className="text-sm text-gray-600">
               {incomingCall.fromName || "Unknown"}
             </div>
@@ -83,11 +85,16 @@ export default function CallModal({
           </>
         ) : callActive ? (
           <>
+            {/* ✅ Add this line */}
+            <div className="font-semibold text-green-600 animate-pulse">
+              📞 Call Received
+            </div>
+
             <div className="font-semibold">
               In call with {calleeName || "User"}
             </div>
 
-            {/* Video preview */}
+            {/* Video Preview */}
             <div className="flex gap-2 mt-2">
               <video
                 ref={localVideoRef}
