@@ -9,10 +9,13 @@ import { useAuthContext } from "../../context/AuthContext";
 
 import useCall from "../../hooks/userCall"; // make sure this handles audio/video
 import CallModal from "../Modal/callModal"; // adjust path
+import { useSocketContext } from "../../context/SocketContext";
 
 const MessageContainer = () => {
   const { selectedConversation, setSelectedConversation } = useConversation();
   const { authUser } = useAuthContext();
+  const { onlineUsers } = useSocketContext();
+  const isOnline = onlineUsers.includes(conversation._id);
 
   const {
     startCall,
@@ -68,13 +71,15 @@ const MessageContainer = () => {
                 {selectedConversation.fullName}
               </span>
               <div className="text-sm text-gray-800">
-                {selectedConversation.lastSeen ? (
+                {isOnline ? (
+                  <p className="text-green-600 font-semibold">🟢 Online</p>
+                ) : selectedConversation.lastSeen ? (
                   <p>
                     Last seen:{" "}
                     {new Date(selectedConversation.lastSeen).toLocaleString()}
                   </p>
                 ) : (
-                  <p>Currently online</p>
+                  <p className="text-gray-500">Last seen unknown</p>
                 )}
               </div>
             </div>
