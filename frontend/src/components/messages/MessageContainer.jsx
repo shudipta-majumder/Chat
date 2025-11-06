@@ -73,7 +73,7 @@ const MessageContainer = () => {
               </span>
               <div className="text-sm text-gray-800">
                 {isOnline ? (
-                  <p className="text-green-600 font-semibold">🟢 Online</p>
+                  <p className="text-green-200 font-semibold">🟢 Online</p>
                 ) : selectedConversation.lastSeen ? (
                   <p>
                     Last seen:{" "}
