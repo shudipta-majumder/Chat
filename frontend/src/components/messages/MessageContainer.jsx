@@ -15,7 +15,8 @@ const MessageContainer = () => {
   const { selectedConversation, setSelectedConversation } = useConversation();
   const { authUser } = useAuthContext();
   const { onlineUsers } = useSocketContext();
-  const isOnline = onlineUsers.includes(conversation._id);
+  const isOnline =
+    selectedConversation && onlineUsers.includes(selectedConversation._id);
 
   const {
     startCall,
