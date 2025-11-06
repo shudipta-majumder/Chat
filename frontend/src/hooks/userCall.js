@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { io } from "socket.io-client";
 
 const SIGNALING_SERVER_URL = "https://chat-994b.onrender.com";
+// const SIGNALING_SERVER_URL = "https://chat-994b.onrender.com";
 
 const ICE_SERVERS = {
   iceServers: [

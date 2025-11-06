@@ -94,7 +94,7 @@ export default function CallModal({
                 autoPlay
                 muted
                 playsInline
-                className="w-100 h-65 rounded border border-gray-300"
+                className="w-24 h-24 rounded border border-gray-300"
               />
               <video
                 ref={remoteVideoRef}

@@ -12,6 +12,8 @@ export const SocketContextProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const { authUser } = useAuthContext();
+  const BACKEND_URL = "https://chat-994b.onrender.com"
+  // const BACKEND_URL = "https://chat-994b.onrender.com"
 
   useEffect(() => {
     if (authUser) {
