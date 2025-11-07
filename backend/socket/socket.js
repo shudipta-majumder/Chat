@@ -9,10 +9,15 @@ const app = express();
 
 const FRONTEND_ORIGIN = process.env.frontend_url || process.env.production_url;
 
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://chat-994b.onrender.com",
+];
+
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ["https://chat-994b.onrender.com"],
+    origin: allowedOrigins,
     methods: ["GET", "POST"],
   },
 });

@@ -8,6 +8,11 @@ const SIGNALING_SERVER_URL = "https://chat-994b.onrender.com";
 const ICE_SERVERS = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
+    {
+      urls: "turn:relay1.expressturn.com:3478",
+      username: "efree",
+      credential: "efree123"
+    }
     // add TURN server for production
   ],
 };
