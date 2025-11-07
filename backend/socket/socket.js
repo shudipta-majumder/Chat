@@ -86,11 +86,16 @@
 
 
 
+
+
+
+
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
-import User from "../models/user.model.js";
 import dotenv from "dotenv";
+import User from "../models/user.model.js";
+
 dotenv.config();
 
 const app = express();
@@ -110,71 +115,73 @@ const io = new Server(server, {
 
 const userSocketMap = {}; // { userId: socketId }
 
-export const getReceiverSocketId = (receiverId) => userSocketMap[receiverId];
+const getReceiverSocketId = (receiverId) => userSocketMap[receiverId];
 
 io.on("connection", (socket) => {
-  console.log("✅ User connected:", socket.id);
+  console.log("🟢 User connected:", socket.id);
 
   const userId = socket.handshake.query.userId;
   if (userId && userId !== "undefined") {
     userSocketMap[userId] = socket.id;
+    console.log(`✅ Registered user ${userId} → ${socket.id}`);
   }
 
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
-  // --- Call User ---
+  // 📞 Call request
   socket.on("call-user", ({ from, fromName, to, callType }) => {
-    const receiverSocketId = userSocketMap[to];
+    const receiverSocketId = getReceiverSocketId(to);
+    console.log("📞 call-user:", { from, to, receiverSocketId });
+
     if (receiverSocketId) {
       io.to(receiverSocketId).emit("incoming-call", {
         from,
         fromName,
         callType,
       });
+    } else {
+      console.warn(`❌ Receiver ${to} not connected`);
     }
   });
 
-  // --- WebRTC Offer ---
+  // 📨 Offer
   socket.on("offer", ({ from, to, sdp, callType }) => {
-    const receiverSocketId = userSocketMap[to];
-    if (receiverSocketId) {
+    const receiverSocketId = getReceiverSocketId(to);
+    if (receiverSocketId)
       io.to(receiverSocketId).emit("offer", { from, sdp, callType });
-    }
   });
 
-  // --- WebRTC Answer ---
+  // 📨 Answer
   socket.on("answer", ({ from, to, sdp }) => {
-    const receiverSocketId = userSocketMap[to];
-    if (receiverSocketId) {
+    const receiverSocketId = getReceiverSocketId(to);
+    if (receiverSocketId)
       io.to(receiverSocketId).emit("answer", { from, sdp });
-    }
   });
 
-  // --- ICE Candidate ---
+  // ❄️ ICE
   socket.on("ice-candidate", ({ from, to, candidate }) => {
-    const receiverSocketId = userSocketMap[to];
-    if (receiverSocketId) {
+    const receiverSocketId = getReceiverSocketId(to);
+    if (receiverSocketId)
       io.to(receiverSocketId).emit("ice-candidate", { from, candidate });
-    }
   });
 
-  // --- End Call ---
+  // ❌ End call
   socket.on("end-call", ({ from, to }) => {
-    const receiverSocketId = userSocketMap[to];
-    if (receiverSocketId) {
+    const receiverSocketId = getReceiverSocketId(to);
+    if (receiverSocketId)
       io.to(receiverSocketId).emit("end-call", { from });
-    }
   });
 
-  // --- Disconnect ---
+  // 🔴 Disconnect
   socket.on("disconnect", async () => {
-    console.log("❌ User disconnected:", socket.id);
-    delete userSocketMap[userId];
+    console.log("🔴 Disconnected:", socket.id);
+    if (userId) delete userSocketMap[userId];
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
+
     try {
       if (userId) await User.findByIdAndUpdate(userId, { lastSeen: new Date() });
-    } catch (error) {
-      console.error("Error updating user last seen:", error);
+    } catch (e) {
+      console.error("Error updating user last seen:", e);
     }
   });
 });
