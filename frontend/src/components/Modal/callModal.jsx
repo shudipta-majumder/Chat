@@ -1,4 +1,3 @@
-// src/components/CallModal.jsx
 import React, { useEffect, useRef, useState } from "react";
 
 export default function CallModal({
@@ -9,8 +8,8 @@ export default function CallModal({
   acceptCallHandler,
   rejectCallHandler,
   endCallHandler,
-  localStream,
-  remoteStreamRef,
+  localStreamRef, // ref from hook
+  remoteStreamRef, // ref from hook
   muted,
   muteToggle,
   videoEnabled,
@@ -23,17 +22,17 @@ export default function CallModal({
 
   // Attach local stream
   useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      localVideoRef.current.srcObject = localStream;
+    if (localVideoRef.current && localStreamRef?.current) {
+      localVideoRef.current.srcObject = localStreamRef.current;
     }
-  }, [localStream]);
+  }, [localStreamRef?.current]);
 
   // Attach remote stream
   useEffect(() => {
     if (remoteVideoRef.current && remoteStreamRef?.current) {
       remoteVideoRef.current.srcObject = remoteStreamRef.current;
     }
-  }, [remoteStreamRef]);
+  }, [remoteStreamRef?.current]);
 
   // Control modal visibility
   useEffect(() => {
@@ -49,21 +48,19 @@ export default function CallModal({
         {incomingCall ? (
           <>
             <div className="font-semibold">
-              Incoming {incomingCall.callType || "audio"} call
+              Incoming {incomingCall.type || "audio"} call
             </div>
-            <div className="text-sm text-gray-600">
-              {incomingCall.fromName || "Unknown"}
-            </div>
+            <div className="text-sm text-gray-600">{incomingCall.fromName || "Unknown"}</div>
             <div className="flex gap-2 mt-2">
               <button
                 className="bg-green-500 text-white px-3 py-1 rounded"
-                onClick={() => acceptCallHandler(incomingCall.from)}
+                onClick={() => acceptCallHandler()}
               >
                 Accept
               </button>
               <button
                 className="bg-red-500 text-white px-3 py-1 rounded"
-                onClick={() => rejectCallHandler(incomingCall.from)}
+                onClick={() => rejectCallHandler()}
               >
                 Reject
               </button>
@@ -71,9 +68,7 @@ export default function CallModal({
           </>
         ) : isCalling ? (
           <>
-            <div className="font-semibold">
-              Calling {calleeName || "User"}...
-            </div>
+            <div className="font-semibold">Calling {calleeName || "User"}...</div>
             <div className="flex gap-2 mt-2">
               <button
                 className="bg-red-500 text-white px-3 py-1 rounded"
@@ -85,14 +80,9 @@ export default function CallModal({
           </>
         ) : callActive ? (
           <>
-            {/* ✅ Add this line */}
-            <div className="font-semibold text-green-600 animate-pulse">
-              📞 Call Received
-            </div>
+            <div className="font-semibold text-green-600 animate-pulse">📞 Call Active</div>
 
-            <div className="font-semibold">
-              In call with {calleeName || "User"}
-            </div>
+            <div className="font-semibold">In call with {calleeName || "User"}</div>
 
             {/* Video Preview */}
             <div className="flex gap-2 mt-2">
