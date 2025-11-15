@@ -31,35 +31,33 @@ const userSocketMap = {}; // {userId: socketId}
 io.on("connection", (socket) => {
   console.log("a user connected", socket.id);
 
-  // if client passed userId via query params
-  const userId = socket.handshake.query?.userId;
-  if (userId && userId !== "undefined") {
-    userSocketMap[userId] = socket.id;
-  }
+  const userId = socket.handshake.query.userId;
+  if (userId != "undefined") userSocketMap[userId] = socket.id;
 
-  // broadcast current online users
+  // io.emit() is used to send events to all the connected clients
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   // join room
-  socket.on("join-room", ({ conversationId, userId: joiningUserId }) => {
+  socket.on("join-room", ({ conversationId, userId }) => {
     socket.join(conversationId);
-    socket.data.userId = joiningUserId; // store on socket instance
-    console.log(`Socket ${socket.id} joined room ${conversationId} as user ${joiningUserId}`);
+    socket.data.userId = userId;
+    console.log(`Socket ${socket.id} joined room ${conversationId}`);
   });
 
-  // Call user (audio/video) - NOTE: we use `type` consistently
-  socket.on("call-user", ({ conversationId, from, fromName, to, type }) => {
-    // emit to everyone in the conversation except the sender
-    socket.to(conversationId).emit("incoming-call", { from, fromName, type });
+  // Call user (audio/video)
+  socket.on("call-user", ({ conversationId, from, fromName, to, callType }) => {
+    socket
+      .to(conversationId)
+      .emit("incoming-call", { from, fromName, callType });
   });
 
-  // WebRTC signaling - include `type` where appropriate
-  socket.on("offer", ({ conversationId, from, fromName, sdp, type }) => {
-    socket.to(conversationId).emit("offer", { from, fromName, sdp, type });
+  // WebRTC signaling
+  socket.on("offer", ({ conversationId, from, fromName, sdp }) => {
+    socket.to(conversationId).emit("offer", { from, fromName, sdp });
   });
 
-  socket.on("answer", ({ conversationId, from, fromName, sdp, type }) => {
-    socket.to(conversationId).emit("answer", { from, fromName, sdp, type });
+  socket.on("answer", ({ conversationId, from, sdp }) => {
+    socket.to(conversationId).emit("answer", { from, sdp });
   });
 
   socket.on("ice-candidate", ({ conversationId, from, candidate }) => {
@@ -71,15 +69,13 @@ io.on("connection", (socket) => {
     socket.to(conversationId).emit("end-call", { from });
   });
 
+  // socket.on() is used to listen to the events. can be used both on client and server side
   socket.on("disconnect", async () => {
     console.log("user disconnected", socket.id);
-    // prefer socket.data.userId because it was set on join
-    const sidUserId = socket.data?.userId || userId;
-    if (sidUserId) delete userSocketMap[sidUserId];
-
+    delete userSocketMap[userId];
     io.emit("getOnlineUsers", Object.keys(userSocketMap));
     try {
-      if (sidUserId) await User.findByIdAndUpdate(sidUserId, { lastSeen: new Date() });
+      await User.findByIdAndUpdate(userId, { lastSeen: new Date() });
     } catch (error) {
       console.error("Error updating user last seen:", error);
     }
@@ -87,3 +83,5 @@ io.on("connection", (socket) => {
 });
 
 export { app, io, server };
+
+
